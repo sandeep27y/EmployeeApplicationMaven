@@ -1,0 +1,32 @@
+package com.employeeservice.EmployeeService;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import com.employeeservice.*;
+import com.employeedao.EmployeeDAO.Employee;
+
+public interface EmployeeOperations {
+	void createEmployee(Employee employee) throws InvalidEmployeeData, SQLException;
+
+    Employee findEmployee(int empId);
+    
+    List<Employee> diaplayAllEmployees() throws SQLException ;
+
+    boolean deleteEmployee(int empId);
+
+    boolean updateEmployee(int empId,Employee employee) throws InvalidEmployeeData;
+
+	HashSet<String> displayUniqueNames();
+	
+	HashMap<Integer, Integer> ageWiseCount() throws SQLException;
+	
+	List<Employee> sort(Sorting selectedSortColumn) throws SQLException;
+
+	ArrayList<Employee> employeesServingMoreThan5Years() throws SQLException;
+
+	void loadEmployeesToDataBase(ArrayList<Employee> employees);
+	
+}

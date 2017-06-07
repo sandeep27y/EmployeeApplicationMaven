@@ -1,0 +1,295 @@
+package com.employeeservice.EmployeeService;
+
+
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+public class JDBCEmployeeOperationsImpl implements EmployeeOperations{
+	private List<Employee> employeeList = null;
+	private Connection con;
+	private PreparedStatement pStatement;	
+	public JDBCEmployeeOperationsImpl() throws ClassNotFoundException {
+		Class.forName("com.mysql.jdbc.Driver");
+		try {
+			con = DriverManager.getConnection("jdbc:mysql://localhost:3306/employee","root","12345");
+			System.out.println("Table created sucessfully");
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	public void loadEmployeesToDataBase(ArrayList<Employee> employees) {	
+		ResultSet rs = null;
+		int batchSize = 3;
+		try{
+			pStatement = con.prepareStatement("INSERT INTO employee(employeeNumber, name, age, salary, joinDate) VALUES (?, ?, ?, ?, ?)");
+			con.setAutoCommit(false);
+			for(Employee employee:employees){
+				if(employee==null)
+					break;
+				pStatement.setInt(1, employee.getNumber());
+				pStatement.setString(2, employee.getName());
+				pStatement.setInt(3, employee.getAge());
+				pStatement.setDouble(4, employee.getSalary());
+				pStatement.setDate(5, employee.getDate());
+				pStatement.addBatch();
+			}
+			int[] updateCount = pStatement.executeBatch();
+			con.commit();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	@Override
+	public void createEmployee(Employee employee) throws InvalidEmployeeData, SQLException {
+		if(employee.getNumber()==0){
+			throw new InvalidEmployeeData("Employee ID is Zero");	
+	}
+	if(employee.getAge()>=100){
+		throw new InvalidEmployeeData("Employee Age Should be less than 100");
+	}
+		ResultSet rs = null;
+		try{
+			pStatement = con.prepareStatement("INSERT INTO employee(employeeNumber, name, age, salary, joinDate) VALUES (?, ?, ?, ?, ?)");
+			pStatement.setInt(1, employee.getNumber());
+			pStatement.setString(2, employee.getName());
+			pStatement.setInt(3, employee.getAge());
+			pStatement.setDouble(4, employee.getSalary());
+			pStatement.setDate(5, employee.getDate());
+			pStatement.executeUpdate();
+		}catch(SQLException e){
+			e.printStackTrace();
+		}finally {			
+			if (rs != null && !rs.isClosed()) {
+				rs.close();
+			}
+		}
+		
+	}
+
+	@Override
+	public boolean deleteEmployee(int empId) {
+		// TODO Auto-generated method stub
+		boolean x = false;
+		ResultSet rs =	null;
+		int y;
+		try {
+			pStatement = con.prepareStatement("delete from employee where employeeNumber = ? ");
+			
+			pStatement.setInt(1, empId);
+			y=pStatement.executeUpdate();
+			if(y>0){
+				x=true;
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}	
+		if(x==false){
+			throw new EmployeeNotFoundException("Employee is not found for deletion Exception");
+		}
+		return x;
+	}
+
+
+	@Override
+	public Employee findEmployee(int empId) {
+		
+		Employee e = null;
+		ResultSet rs =	null;
+		try {
+			pStatement = con.prepareStatement("select * from employee where employeeNumber=?");
+			pStatement.setInt(1, empId);
+			rs = pStatement.executeQuery();
+			while(rs.next()){
+				e=new Employee(Integer.parseInt(rs.getString("employeeNumber")), rs.getString("name"), Double.parseDouble(rs.getString("salary")), Integer.parseInt(rs.getString("age")), rs.getDate("joinDate"));
+			}
+		}catch(Exception e1){
+			e1.printStackTrace();
+		}
+		
+		if(e == null){
+			throw new EmployeeNotFoundException("Employee ID not found Exception");
+		}
+		return e;
+	}
+
+	@Override
+	public List<Employee> diaplayAllEmployees() throws SQLException {
+		ArrayList<Employee> jdbcDisplayEmployess = new ArrayList<Employee>();
+		ResultSet rs =	null;
+		try {
+			pStatement = con.prepareStatement("select * from employee where employeeNumber");
+			rs = pStatement.executeQuery();
+			while(rs.next()){
+				jdbcDisplayEmployess.add(new Employee(Integer.parseInt(rs.getString("employeeNumber")), rs.getString("name"), Double.parseDouble(rs.getString("salary")), Integer.parseInt(rs.getString("age")), rs.getDate("joinDate")));
+			}
+		}catch(Exception e1){
+			e1.printStackTrace();
+		}finally {
+				rs.close();
+			}
+		
+		return jdbcDisplayEmployess;
+	}
+
+	@Override
+	public boolean updateEmployee(int empId, Employee employee) throws InvalidEmployeeData{
+		// TODO Auto-generated method stub
+		boolean x=false;
+		
+			Employee e = readingEmployee("update");
+			if(e.getAge()>=100){
+				throw new InvalidEmployeeData("Employee Age should be less than 30");
+			}
+			try {
+				pStatement = con.prepareStatement("update employee set name = ?,age=?,salary=?,joinDate=? where employeeNumber = ?");
+				
+				pStatement.setString(1, e.getName());
+				pStatement.setInt(2, e.getAge());
+				pStatement.setDouble(3, e.getSalary());
+				pStatement.setInt(4, empId);
+				pStatement.setDate(5, e.getDate());
+				pStatement.executeUpdate();
+				
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			x=true;
+		
+		return x;
+	}
+
+	@Override
+	public HashSet<String> displayUniqueNames() {
+		HashSet<String> employeeNames = new HashSet<String>();
+		ResultSet rs = null;
+		
+		try{
+			pStatement = con.prepareStatement("select distinct(name) from employee");
+			rs = pStatement.executeQuery();
+			while(rs.next()){
+				employeeNames.add(rs.getString("name"));
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return employeeNames;
+		
+	}
+	
+	@Override
+	public HashMap<Integer, Integer> ageWiseCount() throws SQLException {
+		HashMap<Integer, Integer> hashMap = new HashMap<Integer, Integer>();
+		ResultSet rs = null;
+		try{
+			pStatement = con.prepareStatement("select age, count(age) As agecount from employee group by age");
+			
+			rs = pStatement.executeQuery();
+			while(rs.next()){
+				hashMap.put(Integer.parseInt(rs.getString("age")), Integer.parseInt(rs.getString("agecount")));
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally{
+			rs.close();
+		}
+		return hashMap;
+		
+	}
+	@Override
+	public ArrayList<Employee> employeesServingMoreThan5Years() throws SQLException {
+		ArrayList<Employee> employees = new ArrayList<Employee>();
+		ResultSet rs = null;
+		try{
+			pStatement = con.prepareStatement("SELECT * FROM employee WHERE joinDate <= sysdate() - interval '5' year");
+			rs = pStatement.executeQuery();
+			while(rs.next()){
+				Employee e=new Employee(Integer.parseInt(rs.getString("employeeNumber")), rs.getString("name"), Double.parseDouble(rs.getString("salary")), Integer.parseInt(rs.getString("age")),rs.getDate("joinDate"));
+				employees.add(e);
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally{
+			rs.close();
+		}
+		return employees;
+	}
+	public List<Employee> sort(Sorting selectedSortColumn) throws SQLException{
+		List<Employee> sortedEmployeeList = null;
+		switch(selectedSortColumn){
+			case SORTBYSALARY:
+				sortedEmployeeList=sortBySalary();
+				break;				
+			case SORTBYID:
+				sortedEmployeeList=sortByID();
+				break;
+		}
+		return sortedEmployeeList;
+	}
+
+	private ArrayList<Employee> sortByID() throws SQLException {
+		ArrayList<Employee> employees = new ArrayList<Employee>();
+		ResultSet rs = null;
+		try{
+			pStatement = con.prepareStatement("select * from employee order by employeeNumber asc");
+			rs = pStatement.executeQuery();
+			while(rs.next()){
+				Employee e=new Employee(Integer.parseInt(rs.getString("employeeNumber")), rs.getString("name"), Double.parseDouble(rs.getString("salary")), Integer.parseInt(rs.getString("age")),rs.getDate("joinDate"));
+				employees.add(e);
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally{
+			rs.close();
+		}
+		return employees;
+		
+	}
+
+	private ArrayList<Employee> sortBySalary() throws SQLException {
+		ArrayList<Employee> employees = new ArrayList<Employee>();
+		ResultSet rs = null;
+		try{
+			pStatement = con.prepareStatement("select * from employee order by salary asc");
+			rs = pStatement.executeQuery();
+			while(rs.next()){
+				Employee e=new Employee(Integer.parseInt(rs.getString("employeeNumber")), rs.getString("name"), Double.parseDouble(rs.getString("salary")), Integer.parseInt(rs.getString("age")),rs.getDate("joinDate"));
+				employees.add(e);
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally{
+			rs.close();
+		}
+		return employees;
+	}
+	
+	protected void finalize() throws Throwable {
+		System.out.printf("Inside finalyze");
+		try {
+			con.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		super.finalize();
+	}
+
+
+	
+
+	
+
+}

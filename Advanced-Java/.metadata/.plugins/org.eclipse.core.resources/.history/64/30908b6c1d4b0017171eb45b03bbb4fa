@@ -1,0 +1,10 @@
+package com.employeeApp.EmployeeAPP;
+
+public class Snippet {
+	public static void main(String[] args) {
+		<groupId>com.employeeservice</groupId>
+		  <artifactId>EmployeeService</artifactId>
+		  <version>0.0.1-SNAPSHOT</version>
+	}
+}
+

@@ -1,0 +1,5 @@
+package com.employeeservice.EmployeeService;
+
+public enum EmployeeOp {
+
+}

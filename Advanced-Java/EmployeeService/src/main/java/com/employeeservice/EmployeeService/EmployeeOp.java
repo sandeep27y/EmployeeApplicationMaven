@@ -1,0 +1,38 @@
+package com.employeeservice.EmployeeService;
+
+import java.util.Scanner;
+
+public enum EmployeeOp {
+
+	ADD(1),DELETE(2),UPDATE(3),DISPLAYBYID(4),DISPLAYALL(5), SORT(6), DISPLAYUNIQUENAMES(7), AGEWISECOUNT(8), EMPLOYEESSERVINGMORETHAN5YEARS(9),EXIT(10);
+
+	int employeeOption;
+	EmployeeOp(int employeeOption){
+		this.employeeOption=employeeOption;
+	}
+	public static EmployeeOp getselectedEmployeeColoumn(){
+		EmployeeOp slectedEmployeeColoumn;
+
+		for(EmployeeOp empOperations: EmployeeOp.values()){
+			System.out.println(empOperations.employeeOption+" : "+empOperations.name());
+		}
+		System.out.println("Select the column: ");
+		int selectedIndex = new Scanner(System.in).nextInt();
+
+		slectedEmployeeColoumn = getEmpColumn(selectedIndex);
+		return slectedEmployeeColoumn;
+	}
+
+	static EmployeeOp getEmpColumn(int givenIndex) {
+		//Department departmentNumber;
+
+		for(EmployeeOp empOperations : EmployeeOp.values()) {
+			if (empOperations.employeeOption == givenIndex) {
+				return empOperations;
+			}
+		}
+
+		return null;
+	}
+
+}

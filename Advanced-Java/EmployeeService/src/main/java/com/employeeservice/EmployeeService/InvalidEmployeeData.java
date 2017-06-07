@@ -1,0 +1,14 @@
+package com.employeeservice.EmployeeService;
+
+public class InvalidEmployeeData extends Exception{
+
+	public InvalidEmployeeData(String message){
+		super(message);
+	}
+	public InvalidEmployeeData(){
+		super();
+	}
+	public InvalidEmployeeData(String message, Throwable arg1){
+		super(message,arg1);
+	}
+}

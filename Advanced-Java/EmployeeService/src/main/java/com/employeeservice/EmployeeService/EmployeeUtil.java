@@ -1,0 +1,185 @@
+package com.employeeservice.EmployeeService;
+
+
+
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Scanner;
+
+import com.employeedao.EmployeeDAO.Employee;
+
+
+public class EmployeeUtil {
+
+	
+	public static int readNumberofEmployessFromUser(){
+		Scanner scn = new Scanner(System.in);
+		System.out.println("Please enter the number of Employees you want to create");
+		return scn.nextInt();
+	}
+	public static double highestSalary(Employee e1, Employee e2){
+		double highestSalary = 0.0;
+		if(e1.getSalary()>e2.getSalary()){
+			highestSalary=e1.getSalary();
+		}
+		else{
+			highestSalary=e2.getSalary();
+		}
+		return highestSalary;
+	}
+	
+	public static Employee olderEmployeeByAge(Employee e1, Employee e2){
+		Employee e;
+		if(e1.getAge()<e2.getAge()){
+			e=e2;
+		}else{
+			e=e1;
+		}
+		return e;
+	}
+	
+	public static void updateEmployeeSalary(Employee e){
+		if((e.getSalary()<10000)&&(e.getAge()>35)){
+			e.setSalary((e.getSalary()+e.getSalary()*0.15));
+		}else if((e.getSalary()<15000)&&(e.getAge()>45)){
+			e.setSalary((e.getSalary()+e.getSalary()*0.20));
+		}else if((e.getSalary()<20000)&&(e.getAge()>55)){
+			e.setSalary((e.getSalary()+e.getSalary()*0.25));
+		}
+	}
+	public static double grossSalaryCalculation(Employee e){
+		double grossSalary;
+		if(e.getSalary()<10000){
+			grossSalary = e.getSalary()+e.getSalary()*0.08+e.getSalary()*0.15;
+		}else if(e.getSalary()<20000){
+			grossSalary = e.getSalary()+e.getSalary()*0.10+e.getSalary()*0.20;
+		}else if((e.getSalary()<30000)&&(e.getAge()>=40)){
+			grossSalary = e.getSalary()+e.getSalary()*0.15+e.getSalary()*0.27;
+		}else if((e.getSalary()<30000)&&(e.getAge()<40)){
+			grossSalary = e.getSalary()+e.getSalary()*0.13+e.getSalary()*0.25;
+		}else{
+			grossSalary = e.getSalary()+e.getSalary()*0.17+e.getSalary()*0.30;
+		}
+		return grossSalary;
+	}
+	public static Employee readingEmployee(String option) {
+		Employee employee=null;
+		
+		try{
+		Scanner scn = new Scanner(System.in);
+		System.out.println("Please enter the employee name:");
+		String name = scn.next();
+		System.out.println("Please enter the employee Age:");
+		int age = scn.nextInt();
+		System.out.println("Please enter the employee Salary:");
+		Double salary = scn.nextDouble();
+		System.out.println("Please enter the employee Join Date:");
+		String date = scn.next();
+		String dateFormat = "dd-MM-yyyy";
+		SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+		Date utildate=sdf.parse(date);
+		long ms=utildate.getTime();
+		java.sql.Date sqlDate = new java.sql.Date(ms);
+		if(option.equals("insert")){
+		System.out.println("Please enter the employee Number:");
+		int number = scn.nextInt();
+		employee = new Employee(number, name, salary, age,sqlDate);
+			}else{
+			employee = new Employee(name, salary, age, sqlDate);
+			}
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return employee;
+	}
+	
+
+	public static int detailsForUpdatingEmployee(){
+		int x = 0;
+		try{
+		Scanner scn = new Scanner(System.in);
+		System.out.println("Please enter the id of the employee you want to update");
+		x= scn.nextInt();
+		}
+		catch(Exception e){
+			System.out.println("Please enter the valid data");
+		}
+		return x;
+	}
+	public static int detailsForDeletingEmployee(){
+		int x = 0;
+		try{
+		Scanner scn = new Scanner(System.in);
+		System.out.println("Please enter the id of the employee you want to delete");
+		x= scn.nextInt();
+		}
+		catch(Exception e){
+			System.out.println("Please enter the valid data");
+		}
+		return x;
+	}
+	public static int detailsForDisplayEmployeeById(){
+		int x = 0;
+		try{
+		Scanner scn = new Scanner(System.in);
+		System.out.println("Please enter the id of the employee you want to display");
+		x= scn.nextInt();
+		}
+		catch(Exception e){
+			System.out.println("Please enter the valid data");
+		}
+		return x;
+	}
+	public static String detailsForDisplayEmployeeByName(){
+		Scanner scn = new Scanner(System.in);
+		System.out.println("Please enter the Name of the employee you want to display");
+		return scn.next();
+	}
+	public static java.sql.Date dateParsingToSQL(String date){
+		SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+		Date utildate = null;
+		try {
+			utildate = sdf.parse(date);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		java.sql.Date sqldate = new java.sql.Date(utildate.getTime());
+		return sqldate;
+		
+	}
+	public static ArrayList<Employee> loadingEmployeesToArray(){
+		ArrayList<Employee> employees = new ArrayList<Employee>();
+		try {
+			FileInputStream fileInputStream = new FileInputStream(new File("E:/EmpData.csv"));
+			DataInputStream dataInputStream = new DataInputStream(fileInputStream);
+			String line = null;
+			int count=0;
+			while((line =dataInputStream.readLine())!=null){
+				if(count>0){
+					String[] details = line .split(",");
+					int number = Integer.parseInt(details[0]);
+					String name = details[1];
+					double salary = Double.parseDouble(details[2]);
+					int age = Integer.parseInt(details[3]);
+					String date1 = details[4];
+					java.sql.Date date=dateParsingToSQL(date1);
+					Employee employee = new Employee(number, name, salary, age, date);
+					employees.add(employee);
+				}
+				count++;
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return employees;		
+	}
+}
